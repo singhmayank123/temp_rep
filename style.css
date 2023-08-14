@@ -1,0 +1,8 @@
+/* Add your custom CSS styles here */
+
+/* Center the footer text */
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+  }
