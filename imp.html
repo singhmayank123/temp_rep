@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Testing Process</title>
+    <head>
+    <title>Long Command Example</title>
+    <style>
+        code {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+</head>
+<body>
+    <h2>Working of Build Server</h2>
+    <ol>
+        <li>Create your workspace. (mkdir workspace_name)</li>
+        <li>Mention your date and create a directory named cmake_build (You can choose any name, but generally we are preferring cmake_build name).</li>
+        <li>Create today’s date folder.</li>
+        <li>Inside the date-specific folder of the workspace, clone tops using the below command:
+            <pre><code>git clone "ssh://apurva@gerrit.enflame.cn:29418/tops" &amp;&amp; (cd "tops" &amp;&amp; curl -sL http://build.enflame.cn/.init.sh | bash)</code></pre>
+            <p>Note: In the above command, "apurva" must be replaced with the username you have logged in to your build server.</p>
+        </li>
+        <li>Inside tops, run the following command: 
+            <pre><code>git submodule update --init --recursive</code></pre>
+        </li>
+        <li>Inside the cmake_build folder, run the following commands:
+            <pre><code>cmake -S ../tops/ -G Ninja -DINCLUDE_TOPSIDEAS=OFF 2&gt;&amp;1|tee ../config.log</code></pre>
+            <pre><code>ninja install 2&gt;&amp;1|tee ../install.log</code></pre>
+            <pre><code>ninja package_all 2&gt;&amp;1|tee ../package_all.log</code></pre>
+        </li>
+        <li>REPEAT STEP 3, 4, 5, and 6 once a week.</li>
+        <li>Generate “.whl” file. For generation, follow the below steps:
+            <ul>
+                <li>Go to the cmake_build folder where your x86_64-linux-rel contains.</li>
+                <li>Now, run the command:
+                    <pre><code>ninja torch_gcu3.6 2&gt;&amp;1 | tee ../logs/ninja.log</code></pre>
+                    <p>In the build folder. After running the command, your “.whl” file will be generated.</p>
+                </li>
+            </ul>
+        </li>
+        <li>Now, run the command:
+            <pre><code>readlink -f "path-of-whl-package"</code></pre>
+            <p>and copy the path.</p>
+        </li>
+        <li>REPEAT step 8 and 9 whenever you make any changes to the .cpp file code.</li>
+    </ol>
+
+    <h2>Working of TEST Server</h2>
+    <ol>
+        <li>To go into the test server, run the command: <pre><code>ssh -p 22 matthew.he@10.12.114.242</code></pre></li>
+        <li>Go to the Aditya folder and create your workspace. Within the workspace, create today’s date folder.</li>
+        <li>Now, we have to copy the x86_64-linux-rel folder path to the date folder. Use the below command:
+            <pre><code>sudo scp -r niraj@10.9.114.31:/home/niraj/MS_workspace/1907/build/x86_64-linux-rel ./</code></pre>
+            <p>Syntax: sudo scp -r username@ip:/path-of-x86-from-build ./</p>
+        </li>
+        <li>Go to the x86 folder.</li>
+        <li>Install kmd. Command: <pre><code> ./setup_platform.sh t20_silicon_x86_ubuntu kmd_install</code></pre> </li>
+        <p>Note: Whenever we create a new x86 folder, a new docker will be created.</p>
+        <li>Create a new docker, below are the steps:
+            <ul>
+                <li>ctrl + r and type sudo docker run, and automatically enters. "exit" keyword is used to come out of the docker. Command: <pre><code>sudo docker run -it --volume=/home:/home --volume=/log:/log --volume=/root:/root --network host --ipc=host --pid=host --volume=/corefile:/corefile -v /usr/src/:/usr/src/ -v /lib/modules:/lib/modules --privileged --ulimit core=-1 --security-opt seccomp=unconfined -e PATH=$PATH artifact.enflame.cn/enflame_docker_images/ubuntu/qic_ubuntu_1804_gcc7:latest
+</code></pre></li>
+                <li><pre><code>sudo docker start docker_name</code></pre></li>
+                <li><pre><code>sudo docker ps -a</code></pre> (to check the name of your docker)</li>
+                <li><pre><code>sudo docker exec -ti docker_name bash</code></pre> (to enter into your docker)</li>
+            </ul>
+        </li>
+        <li>Go to the x86 folder of the test server and run the command for package install.Command: <pre><code>sudo ./setup_platform.sh t20_silicon_x86_ubuntu package_install 3.6
+</code></pre></li>
+        <li>Go back to one directory and copy the whl file path from the build server to this path using the scp command:
+            <pre><code>scp -r niraj@10.9.114.31:/home/niraj/MS_workspace/1407/cmake_build/x86_64-linux-rel ./</code></pre>
+        </li>
+        <li>Now, you need to uninstall the already existing wheel package using the command:
+            <pre><code>python -m pip uninstall torch_gcu</code></pre>
+        </li>
+        <li>Now, run the install command within the same folder:
+            <pre><code>python -m pip install torch_gcu-1.10.0-2.2.1-py3.6-none-any.whl</code></pre>
+        </li>
+        <li>Run your python test case file.</li>
+    </ol>
+</body>
+</html>
